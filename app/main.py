@@ -44,9 +44,15 @@ async def telegram_webhook(request: Request) -> Response:
         raise HTTPException(status_code=503, detail="Telegram is not configured")
 
     if settings.telegram_webhook_secret:
-        got = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+        got = (request.headers.get("X-Telegram-Bot-Api-Secret-Token") or "").strip()
         if got != settings.telegram_webhook_secret:
-            raise HTTPException(status_code=403, detail="Bad webhook secret")
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Webhook secret: заголовок X-Telegram-Bot-Api-Secret-Token не совпадает с TELEGRAM_WEBHOOK_SECRET. "
+                    "Либо вызовите setWebhook с тем же secret_token, либо удалите/очистите TELEGRAM_WEBHOOK_SECRET в .env."
+                ),
+            )
 
     bot: Bot = request.app.state.tg_bot
     dp = request.app.state.tg_dp

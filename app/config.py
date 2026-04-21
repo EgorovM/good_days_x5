@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +10,16 @@ class Settings(BaseSettings):
 
     telegram_bot_token: str | None = Field(default=None, validation_alias="TELEGRAM_BOT_TOKEN")
     telegram_webhook_secret: str | None = Field(default=None, validation_alias="TELEGRAM_WEBHOOK_SECRET")
+
+    @field_validator("telegram_webhook_secret", mode="before")
+    @classmethod
+    def _empty_webhook_secret_is_none(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s if s else None
+        return v
 
     vk_api_token: str | None = Field(default=None, validation_alias="VK_API_TOKEN")
     vk_group_id: int | None = Field(default=None, validation_alias="VK_GROUP_ID")
