@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -10,6 +11,9 @@ from app import runtime
 from app.config import Settings
 from app import vk_client
 from app.vk_delivery import send_vk_segments
+from app.vk_payload import extract_message_event, extract_message_new
+
+log = logging.getLogger(__name__)
 
 
 def _is_start(text: str | None) -> bool:
@@ -36,26 +40,56 @@ def build_vk_router(settings: Settings) -> APIRouter:
             return Response(content=settings.vk_callback_confirmation or "", media_type="text/plain")
 
         if body.get("type") == "message_new":
-            msg = body.get("object", {}).get("message") or {}
+            msg = extract_message_new(body) or {}
+            if not msg:
+                return Response(content="ok", media_type="text/plain")
+
+            # Исходящие сообщения сообщества не обрабатываем (избегаем петель)
+            if msg.get("out") == 1:
+                return Response(content="ok", media_type="text/plain")
+
             text = msg.get("text")
             peer_id = msg.get("peer_id")
             from_id = msg.get("from_id")
             if peer_id is None or from_id is None:
+                log.warning("VK message_new без peer_id/from_id: keys=%s", list(msg.keys())[:20])
                 return Response(content="ok", media_type="text/plain")
 
-            if _is_start(text):
-                session, segments = start_game()
-                runtime.vk_sessions[int(from_id)] = session
-                token = settings.vk_api_token or ""
-                gid = int(settings.vk_group_id or 0)
-                await send_vk_segments(token=token, group_id=gid, peer_id=int(peer_id), segments=segments)
+            peer_id = int(peer_id)
+            from_id = int(from_id)
+            token = settings.vk_api_token or ""
+            gid = abs(int(settings.vk_group_id or 0))
+
+            async def _hint(message: str) -> None:
+                try:
+                    await vk_client.vk_send_message(token, peer_id=peer_id, text=message)
+                except vk_client.VkApiError:
+                    log.exception("VK messages.send (hint) failed peer_id=%s", peer_id)
+
+            try:
+                if _is_start(text):
+                    session, segments = start_game()
+                    runtime.vk_sessions[from_id] = session
+                    await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+                else:
+                    session = runtime.vk_sessions.get(from_id)
+                    if session is None or session.finished:
+                        await _hint("Чтобы начать квест, напиши: старт или /start")
+                    elif not session.finished:
+                        await _hint("Выбери ответ кнопкой A, B или C под последним сообщением (или напиши «старт» для новой игры).")
+            except vk_client.VkApiError:
+                log.exception("VK message_new handling failed from_id=%s peer_id=%s", from_id, peer_id)
+
             return Response(content="ok", media_type="text/plain")
 
         if body.get("type") == "message_event":
-            obj = body.get("object") or {}
+            obj = extract_message_event(body) or {}
             event_id = str(obj.get("event_id") or "")
             user_id = int(obj.get("user_id") or 0)
             peer_id = int(obj.get("peer_id") or 0)
+            if peer_id <= 0 and user_id > 0:
+                peer_id = user_id
+
             raw_payload = obj.get("payload")
             payload: dict[str, Any] = {}
             if isinstance(raw_payload, str):
@@ -68,7 +102,7 @@ def build_vk_router(settings: Settings) -> APIRouter:
 
             option_id = str(payload.get("o") or "")
             token = settings.vk_api_token or ""
-            gid = int(settings.vk_group_id or 0)
+            gid = abs(int(settings.vk_group_id or 0))
 
             if event_id and user_id and peer_id:
                 try:
@@ -76,15 +110,19 @@ def build_vk_router(settings: Settings) -> APIRouter:
                         token, event_id=event_id, user_id=user_id, peer_id=peer_id
                     )
                 except vk_client.VkApiError:
-                    pass
+                    log.exception("VK sendMessageEventAnswer failed")
 
             session = runtime.vk_sessions.get(user_id)
             if session is None or session.finished or not option_id:
                 return Response(content="ok", media_type="text/plain")
 
-            session, segments = apply_answer(session, option_id)
-            runtime.vk_sessions[user_id] = session
-            await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+            try:
+                session, segments = apply_answer(session, option_id)
+                runtime.vk_sessions[user_id] = session
+                await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+            except vk_client.VkApiError:
+                log.exception("VK message_event send failed user_id=%s", user_id)
+
             return Response(content="ok", media_type="text/plain")
 
         return Response(content="ok", media_type="text/plain")

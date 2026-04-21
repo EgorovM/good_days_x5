@@ -26,6 +26,16 @@ class Settings(BaseSettings):
     vk_callback_confirmation: str | None = Field(default=None, validation_alias="VK_CALLBACK_CONFIRMATION")
     vk_secret: str | None = Field(default=None, validation_alias="VK_SECRET")
 
+    @field_validator("vk_api_token", "vk_callback_confirmation", "vk_secret", mode="before")
+    @classmethod
+    def _strip_optional_vk_strings(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s if s else None
+        return v
+
     @property
     def has_telegram(self) -> bool:
         return bool(self.telegram_bot_token)
