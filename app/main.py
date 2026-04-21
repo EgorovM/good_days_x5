@@ -3,6 +3,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.types import Update
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
@@ -19,7 +21,10 @@ runtime.settings = settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if settings.has_telegram:
-        app.state.tg_bot = Bot(settings.telegram_bot_token)
+        app.state.tg_bot = Bot(
+            settings.telegram_bot_token,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
         app.state.tg_dp = build_tg_dispatcher()
     yield
     if getattr(app.state, "tg_bot", None):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from app import runtime
+from app.formatting import esc, format_segment_html
 from app.game_engine import Segment
 from app.media import image_public_url
 from app.paths import STATIC_IMAGES_DIR
@@ -45,10 +46,14 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
             attachment = await vk_client.vk_upload_photo_from_url(
                 token, group_id=group_id, peer_id=peer_id, image_url=url
             )
-        text = seg.text or ""
+        raw = seg.text or ""
+        html_body = format_segment_html(raw, seg.kind) if raw else ""
         if seg.image and url and not attachment:
-            text = (text + f"\n\n{url}").strip()
+            text = (html_body + "\n\n" + esc(url)).strip() if html_body else esc(url)
+        else:
+            text = html_body
         kb = _vk_keyboard_json(seg.options)
+        fmt = 2 if text else None
         try:
             await vk_client.vk_send_message(
                 token,
@@ -56,6 +61,7 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 text=text or None,
                 attachment=attachment,
                 keyboard=kb,
+                content_format=fmt,
             )
         except vk_client.VkApiError as e:
             if e.error_code == 912 and kb:
@@ -66,9 +72,10 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 await vk_client.vk_send_message(
                     token,
                     peer_id=peer_id,
-                    text=((text or "") + tail).strip(),
+                    text=((text or "") + esc(tail)).strip(),
                     attachment=attachment,
                     keyboard=None,
+                    content_format=fmt,
                 )
             else:
                 raise

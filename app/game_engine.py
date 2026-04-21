@@ -13,6 +13,7 @@ class Segment:
     text: str | None = None
     image: str | None = None  # имя файла в static/images
     options: list[tuple[str, str]] | None = None  # (id A/B/C, короткий текст для кнопки)
+    kind: str = "plain"  # plain | intro | question | feedback | finale — для HTML (TG + VK)
 
 
 @dataclass
@@ -39,9 +40,9 @@ def format_question_block(q: dict[str, Any]) -> str:
 def start_game() -> tuple[GameSession, list[Segment]]:
     game = load_game()
     session = GameSession()
-    segments: list[Segment] = [Segment(text=game["intro"]["text"])]
+    segments: list[Segment] = [Segment(text=game["intro"]["text"], kind="intro")]
     if game["intro"].get("image"):
-        segments.append(Segment(image=game["intro"]["image"]))
+        segments.append(Segment(image=game["intro"]["image"], kind="plain"))
     segments.extend(question_segments(game["questions"][0]))
     return session, segments
 
@@ -51,24 +52,24 @@ def question_segments(question: dict[str, Any]) -> list[Segment]:
     segs: list[Segment] = []
     if question.get("image"):
         # Только картинка: заголовок этапа уже в format_question_block во втором сообщении
-        segs.append(Segment(image=question["image"]))
+        segs.append(Segment(image=question["image"], kind="plain"))
     body = format_question_block(question)
     opts = [(o["id"], o["id"]) for o in question["options"]]
-    segs.append(Segment(text=body, options=opts))
+    segs.append(Segment(text=body, options=opts, kind="question"))
     return segs
 
 
 def apply_answer(session: GameSession, option_id: str) -> tuple[GameSession, list[Segment]]:
     if session.finished:
-        return session, [Segment(text="Игра уже завершена. Нажми /start чтобы пройти заново.")]
+        return session, [Segment(text="Игра уже завершена. Нажми /start чтобы пройти заново.", kind="plain")]
 
     game = load_game()
     q = game["questions"][session.q_index]
     chosen = next((o for o in q["options"] if o["id"] == option_id), None)
     if chosen is None:
-        return session, [Segment(text="Не понял ответ. Выбери вариант на клавиатуре.")]
+        return session, [Segment(text="Не понял ответ. Выбери вариант на клавиатуре.", kind="plain")]
 
-    out: list[Segment] = [Segment(text=chosen["feedback"])]
+    out: list[Segment] = [Segment(text=chosen["feedback"], kind="feedback")]
     if chosen["correct"]:
         session.score += 1
 
@@ -95,9 +96,9 @@ def finale_segments(score: int) -> list[Segment]:
         "",
         fin["outro"],
     ]
-    segs = [Segment(text="\n".join(lines))]
+    segs = [Segment(text="\n".join(lines), kind="finale")]
     if title.get("image"):
-        segs.append(Segment(image=title["image"]))
+        segs.append(Segment(image=title["image"], kind="plain"))
     return segs
 
 
