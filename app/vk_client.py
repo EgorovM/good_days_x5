@@ -129,7 +129,7 @@ async def vk_send_message(
     keyboard: str | None = None,
     content_format: int | None = None,
 ) -> None:
-    """content_format: 2 = HTML (как в Telegram), см. messages.send format."""
+    """content_format: 1 = markdown ВК, 2 = HTML (в сообщениях сообщества HTML часто не применяется — см. format в messages.send)."""
     params: dict[str, Any] = {"peer_id": peer_id, "random_id": random.randint(1, 2_147_000_000)}
     if text:
         params["message"] = text

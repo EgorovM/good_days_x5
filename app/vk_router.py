@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
-from app.formatting import format_segment_html
+from app.formatting import format_segment_vk
 from app.game_engine import apply_answer, start_game
 from app import runtime
 from app.config import Settings
@@ -76,8 +76,8 @@ def build_vk_router(settings: Settings) -> APIRouter:
                     await vk_client.vk_send_message(
                         token,
                         peer_id=peer_id,
-                        text=format_segment_html(message, "plain"),
-                        content_format=2,
+                        text=format_segment_vk(message, "plain"),
+                        content_format=1,
                     )
                 except vk_client.VkApiError:
                     log.exception("VK messages.send (hint) failed peer_id=%s", peer_id)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from app import runtime
-from app.formatting import esc, format_segment_html
+from app.formatting import format_segment_vk, vk_plain
 from app.game_engine import Segment
 from app.media import image_public_url
 from app.paths import STATIC_IMAGES_DIR
@@ -47,13 +47,13 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 token, group_id=group_id, peer_id=peer_id, image_url=url
             )
         raw = seg.text or ""
-        html_body = format_segment_html(raw, seg.kind) if raw else ""
+        vk_body = format_segment_vk(raw, seg.kind) if raw else ""
         if seg.image and url and not attachment:
-            text = (html_body + "\n\n" + esc(url)).strip() if html_body else esc(url)
+            text = (vk_body + "\n\n" + vk_plain(url)).strip() if vk_body else vk_plain(url)
         else:
-            text = html_body
+            text = vk_body
         kb = _vk_keyboard_json(seg.options)
-        fmt = 2 if text else None
+        fmt = 1 if text else None  # VK: format=1 — markdown (HTML format=2 в чатах часто не рендерится)
         try:
             await vk_client.vk_send_message(
                 token,
@@ -72,7 +72,7 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 await vk_client.vk_send_message(
                     token,
                     peer_id=peer_id,
-                    text=((text or "") + esc(tail)).strip(),
+                    text=((text or "") + vk_plain(tail)).strip(),
                     attachment=attachment,
                     keyboard=None,
                     content_format=fmt,
