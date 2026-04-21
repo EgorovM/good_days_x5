@@ -5,6 +5,7 @@ import json
 from app import runtime
 from app.game_engine import Segment
 from app.media import image_public_url
+from app.paths import STATIC_IMAGES_DIR
 from app import vk_client
 
 
@@ -31,7 +32,16 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
     for seg in segments:
         url = image_public_url(base, seg.image)
         attachment: str | None = None
-        if seg.image and url:
+        local = (STATIC_IMAGES_DIR / seg.image) if seg.image else None
+        if seg.image and local and local.is_file():
+            attachment = await vk_client.vk_upload_photo_bytes(
+                token,
+                group_id=group_id,
+                peer_id=peer_id,
+                data=local.read_bytes(),
+                filename=seg.image,
+            )
+        elif seg.image and url:
             attachment = await vk_client.vk_upload_photo_from_url(
                 token, group_id=group_id, peer_id=peer_id, image_url=url
             )
