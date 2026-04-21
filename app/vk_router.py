@@ -23,6 +23,16 @@ def _is_start(text: str | None) -> bool:
     return t in ("/start", "start", "старт", "начать", "/старт")
 
 
+def _option_letter(text: object) -> str | None:
+    """Один символ A/B/C — ответ без callback-кнопок (например при ошибке 912)."""
+    if not isinstance(text, str):
+        return None
+    t = text.strip().upper()
+    if len(t) == 1 and t in "ABC":
+        return t
+    return None
+
+
 def build_vk_router(settings: Settings) -> APIRouter:
     router = APIRouter()
 
@@ -72,11 +82,19 @@ def build_vk_router(settings: Settings) -> APIRouter:
                     runtime.vk_sessions[from_id] = session
                     await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
                 else:
+                    letter = _option_letter(text)
                     session = runtime.vk_sessions.get(from_id)
-                    if session is None or session.finished:
+                    if letter and session and not session.finished:
+                        session, segments = apply_answer(session, letter)
+                        runtime.vk_sessions[from_id] = session
+                        await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+                    elif session is None or session.finished:
                         await _hint("Чтобы начать квест, напиши: старт или /start")
-                    elif not session.finished:
-                        await _hint("Выбери ответ кнопкой A, B или C под последним сообщением (или напиши «старт» для новой игры).")
+                    else:
+                        await _hint(
+                            "Выбери ответ кнопкой A, B или C под сообщением, "
+                            "или напиши одну букву A, B или C. Чтобы начать заново — напиши «старт»."
+                        )
             except vk_client.VkApiError:
                 log.exception("VK message_new handling failed from_id=%s peer_id=%s", from_id, peer_id)
 

@@ -50,7 +50,8 @@ def question_segments(question: dict[str, Any]) -> list[Segment]:
     """Картинка (если есть) отдельно, затем текст с вариантами и клавиатура."""
     segs: list[Segment] = []
     if question.get("image"):
-        segs.append(Segment(text=question["stage_title"], image=question["image"]))
+        # Только картинка: заголовок этапа уже в format_question_block во втором сообщении
+        segs.append(Segment(image=question["image"]))
     body = format_question_block(question)
     opts = [(o["id"], o["id"]) for o in question["options"]]
     segs.append(Segment(text=body, options=opts))
@@ -96,7 +97,7 @@ def finale_segments(score: int) -> list[Segment]:
     ]
     segs = [Segment(text="\n".join(lines))]
     if title.get("image"):
-        segs.append(Segment(text=title["title"], image=title["image"]))
+        segs.append(Segment(image=title["image"]))
     return segs
 
 

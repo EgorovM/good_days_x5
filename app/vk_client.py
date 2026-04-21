@@ -10,7 +10,11 @@ VK_API_VERSION = "5.199"
 
 
 class VkApiError(RuntimeError):
-    pass
+    """Ошибка VK API; error_code — для обработки (например 912 «возможности ботов»)."""
+
+    def __init__(self, message: str, *, error_code: int | None = None) -> None:
+        super().__init__(message)
+        self.error_code = error_code
 
 
 async def vk_call(token: str, method: str, **params: Any) -> Any:
@@ -21,7 +25,15 @@ async def vk_call(token: str, method: str, **params: Any) -> Any:
     payload = resp.json()
     if "error" in payload:
         err = payload["error"]
-        raise VkApiError(f"{err.get('error_code')} {err.get('error_msg')}")
+        code = err.get("error_code")
+        msg = err.get("error_msg", "")
+        text = f"{code} {msg}"
+        if code == 912:
+            text += (
+                " | ВКонтакте: Управление сообществом → Сообщения → Настройки для бота → "
+                "«Возможности ботов» — Включены (обязательно для кнопок и клавиатур)."
+            )
+        raise VkApiError(text, error_code=code if isinstance(code, int) else None)
     return payload["response"]
 
 

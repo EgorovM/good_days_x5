@@ -49,10 +49,26 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
         if seg.image and url and not attachment:
             text = (text + f"\n\n{url}").strip()
         kb = _vk_keyboard_json(seg.options)
-        await vk_client.vk_send_message(
-            token,
-            peer_id=peer_id,
-            text=text or None,
-            attachment=attachment,
-            keyboard=kb,
-        )
+        try:
+            await vk_client.vk_send_message(
+                token,
+                peer_id=peer_id,
+                text=text or None,
+                attachment=attachment,
+                keyboard=kb,
+            )
+        except vk_client.VkApiError as e:
+            if e.error_code == 912 and kb:
+                tail = (
+                    "\n\nОтветь одной латинской буквой в следующем сообщении: A, B или C.\n"
+                    "(Кнопки появятся, если в сообществе включить: Сообщения → Настройки для бота → «Возможности ботов».)"
+                )
+                await vk_client.vk_send_message(
+                    token,
+                    peer_id=peer_id,
+                    text=((text or "") + tail).strip(),
+                    attachment=attachment,
+                    keyboard=None,
+                )
+            else:
+                raise
