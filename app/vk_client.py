@@ -127,9 +127,9 @@ async def vk_send_message(
     text: str | None = None,
     attachment: str | None = None,
     keyboard: str | None = None,
-    content_format: int | None = None,
+    format_data: str | None = None,
 ) -> None:
-    """content_format: 1 = markdown ВК, 2 = HTML (в сообщениях сообщества HTML часто не применяется — см. format в messages.send)."""
+    """format_data — JSON-строка {version:1, items:[{type,offset,length},...]} (UTF-16), см. VK API messages.send."""
     params: dict[str, Any] = {"peer_id": peer_id, "random_id": random.randint(1, 2_147_000_000)}
     if text:
         params["message"] = text
@@ -137,8 +137,8 @@ async def vk_send_message(
         params["attachment"] = attachment
     if keyboard:
         params["keyboard"] = keyboard
-    if content_format is not None:
-        params["format"] = content_format
+    if format_data:
+        params["format_data"] = format_data
     if "message" not in params and not attachment:
         # VK требует хотя бы одно из: message / attachment / ...
         params["message"] = "\u200b"

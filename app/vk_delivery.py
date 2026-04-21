@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 
 from app import runtime
-from app.formatting import format_segment_vk, vk_plain
+from app.formatting import vk_plain
 from app.game_engine import Segment
+from app.vk_richtext import build_vk_message
 from app.media import image_public_url
 from app.paths import STATIC_IMAGES_DIR
 from app import vk_client
@@ -47,13 +48,12 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 token, group_id=group_id, peer_id=peer_id, image_url=url
             )
         raw = seg.text or ""
-        vk_body = format_segment_vk(raw, seg.kind) if raw else ""
+        vk_body, fmt_data = build_vk_message(raw, seg.kind) if raw else ("", None)
         if seg.image and url and not attachment:
             text = (vk_body + "\n\n" + vk_plain(url)).strip() if vk_body else vk_plain(url)
         else:
             text = vk_body
         kb = _vk_keyboard_json(seg.options)
-        fmt = 1 if text else None  # VK: format=1 — markdown (HTML format=2 в чатах часто не рендерится)
         try:
             await vk_client.vk_send_message(
                 token,
@@ -61,7 +61,7 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                 text=text or None,
                 attachment=attachment,
                 keyboard=kb,
-                content_format=fmt,
+                format_data=fmt_data,
             )
         except vk_client.VkApiError as e:
             if e.error_code == 912 and kb:
@@ -69,13 +69,14 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
                     "\n\nОтветь одной латинской буквой в следующем сообщении: A, B или C.\n"
                     "(Кнопки появятся, если в сообществе включить: Сообщения → Настройки для бота → «Возможности ботов».)"
                 )
+                retry_text = ((text or "") + vk_plain(tail)).strip()
                 await vk_client.vk_send_message(
                     token,
                     peer_id=peer_id,
-                    text=((text or "") + vk_plain(tail)).strip(),
+                    text=retry_text or None,
                     attachment=attachment,
                     keyboard=None,
-                    content_format=fmt,
+                    format_data=fmt_data,
                 )
             else:
                 raise
