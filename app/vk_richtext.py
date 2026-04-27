@@ -39,8 +39,47 @@ def build_vk_message(text: str | None, kind: str) -> tuple[str, str | None]:
     if kind == "feedback":
         return _feedback(text)
     if kind == "finale":
-        return _finale(text)
+        return _finale_with_links(text)
     return text, None
+
+
+_ANCHOR_RE = re.compile(
+    r'<a\s+[^>]*?\bhref\s*=\s*(?:"([^"]+)"|\'([^\']+)\')[^>]*>([^<]*)</a>',
+    re.IGNORECASE,
+)
+
+
+def _unwrap_html_anchors(s: str) -> tuple[str, list[dict[str, Any]]]:
+    """Убирает теги <a>; возвращает плоский текст и элементы type=url для format_data."""
+    chunks: list[str] = []
+    meta: list[tuple[int, int, str]] = []
+    last = 0
+    for m in _ANCHOR_RE.finditer(s):
+        chunks.append(s[last : m.start()])
+        href = m.group(1) or m.group(2) or ""
+        inner = (m.group(3) or "").strip()
+        start = sum(len(c) for c in chunks)
+        chunks.append(inner)
+        meta.append((start, start + len(inner), href))
+        last = m.end()
+    chunks.append(s[last:])
+    plain = "".join(chunks)
+    url_items: list[dict[str, Any]] = []
+    for start, end, href in meta:
+        o, ln = _utf16_span(plain, start, end)
+        url_items.append({"type": "url", "offset": o, "length": ln, "url": href})
+    return plain, url_items
+
+
+def _finale_with_links(text: str) -> tuple[str, str | None]:
+    plain, url_items = _unwrap_html_anchors(text)
+    plain_body, fd_str = _finale(plain)
+    bold_items: list[dict[str, Any]] = []
+    if fd_str:
+        bold_items = json.loads(fd_str).get("items", [])
+    merged = bold_items + url_items
+    merged.sort(key=lambda x: x["offset"])
+    return plain_body, _dump(merged) if merged else (plain_body, None)
 
 
 def _intro(text: str) -> tuple[str, str | None]:
