@@ -146,5 +146,11 @@ def finale_segments(score: int) -> list[Segment]:
     return [Segment(text="\n".join(lines), image=title.get("image"), kind="finale")]
 
 
+def title_for_score(score: int) -> str:
+    game = load_game()
+    title = pick_title(game["titles"], score)
+    return str(title["title"])
+
+
 def reset_session() -> GameSession:
     return GameSession()

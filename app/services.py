@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app import runtime
+from app.business_stats import MemoryBusinessStats, RedisBusinessStats
 from app.config import Settings
 from app.media_cache import MemoryMediaCache, RedisMediaCache
 from app.outbox import MemoryOutbox, RedisOutbox
@@ -15,7 +16,9 @@ async def configure_runtime(settings: Settings) -> None:
         runtime.session_store = MemorySessionStore()
         runtime.outbox = MemoryOutbox()
         runtime.media_cache = MemoryMediaCache()
+        runtime.business_stats = MemoryBusinessStats()
         return
     runtime.session_store = RedisSessionStore(redis, ttl_seconds=settings.session_ttl_seconds)
     runtime.outbox = RedisOutbox(redis)
     runtime.media_cache = RedisMediaCache(redis)
+    runtime.business_stats = RedisBusinessStats(redis)

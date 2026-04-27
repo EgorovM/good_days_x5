@@ -240,7 +240,9 @@
   <script>
     (function () {
       var peer = "{{IM_PEER}}";
-      var url = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
+      var gid = peer ? String(peer).replace("-", "") : "";
+      var urlIm = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
+      var urlVkMe = gid ? ("https://vk.me/public" + gid) : "https://vk.com/";
 
       function withBridge(fn) {
         var bridge = window.vkBridge || window.vkConnect;
@@ -266,16 +268,35 @@
       /* Скрипт bridge в <head> уже выполнился; инициализируем сразу (двойной Init не шлём). */
       initVkShell();
 
+      function openExternalFallback() {
+        // На мобильном VK window.open может игнорироваться; location.href надёжнее.
+        try {
+          window.location.href = urlIm;
+          setTimeout(function () {
+            if (document.visibilityState === "visible") {
+              window.location.href = urlVkMe;
+            }
+          }, 500);
+        } catch (e) {
+          window.open(urlVkMe, "_blank");
+        }
+      }
+
       function openChat() {
+        var openedViaBridge = false;
         withBridge(function (bridge) {
+          openedViaBridge = true;
           bridge
-            .send("VKWebAppOpenURL", { url: url })
+            .send("VKWebAppOpenURL", { url: urlIm })
             .catch(function () {
-              window.open(url, "_blank");
+              return bridge.send("VKWebAppOpenURL", { url: urlVkMe });
+            })
+            .catch(function () {
+              openExternalFallback();
             });
         });
-        if (!window.vkBridge && !window.vkConnect) {
-          window.open(url, "_blank");
+        if (!openedViaBridge) {
+          openExternalFallback();
         }
       }
 

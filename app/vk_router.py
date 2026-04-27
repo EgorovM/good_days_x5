@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
-from app.game_engine import Segment, acknowledge_intro, apply_answer, continue_stage, start_game
+from app.game_engine import Segment, acknowledge_intro, apply_answer, continue_stage, start_game, title_for_score
 from app import runtime
 from app.config import Settings
 from app.metrics import WEBHOOK_EVENTS, WEBHOOK_LATENCY
@@ -84,6 +84,10 @@ def build_vk_router(settings: Settings) -> APIRouter:
                 if _is_start(text):
                     session, segments = start_game()
                     await runtime.session_store.set("vk", from_id, session)
+                    await runtime.business_stats.inc_start(
+                        "vk",
+                        event_key=f"vk:start:{from_id}:{msg.get('conversation_message_id') or msg.get('id')}",
+                    )
                     await _enqueue_segments(
                         segments,
                         f"vk:start:{from_id}:{peer_id}:{msg.get('conversation_message_id') or msg.get('id') or time.time_ns()}",
@@ -103,11 +107,29 @@ def build_vk_router(settings: Settings) -> APIRouter:
                                 f"vk:hint:continue:{from_id}:{peer_id}:{msg.get('conversation_message_id')}",
                             )
                         else:
+                            q_index = session.q_index + 1
+                            pre_score = session.score
                             session, segments = apply_answer(session, letter)
                             await runtime.session_store.set("vk", from_id, session)
+                            correct = session.score > pre_score
+                            dedupe_base = str(msg.get("conversation_message_id") or msg.get("id") or time.time_ns())
+                            await runtime.business_stats.inc_answer(
+                                "vk",
+                                q_index=q_index,
+                                option_id=letter,
+                                correct=correct,
+                                event_key=f"vk:answer:text:{from_id}:{dedupe_base}",
+                            )
+                            if session.finished:
+                                await runtime.business_stats.inc_finish(
+                                    "vk",
+                                    score=session.score,
+                                    title=title_for_score(session.score),
+                                    event_key=f"vk:finish:text:{from_id}:{dedupe_base}",
+                                )
                             await _enqueue_segments(
                                 segments,
-                                f"vk:text-answer:{from_id}:{peer_id}:{msg.get('conversation_message_id') or msg.get('id') or time.time_ns()}",
+                                f"vk:text-answer:{from_id}:{peer_id}:{dedupe_base}",
                             )
                     elif session is None or session.finished:
                         await _hint(
@@ -194,14 +216,32 @@ def build_vk_router(settings: Settings) -> APIRouter:
                 if not option_id or session is None or session.finished:
                     return Response(content="ok", media_type="text/plain")
 
+                q_index = session.q_index + 1
+                pre_score = session.score
                 session, segments = apply_answer(session, option_id)
                 await runtime.session_store.set("vk", user_id, session)
+                correct = session.score > pre_score
+                dedupe_base = event_id or str(time.time_ns())
+                await runtime.business_stats.inc_answer(
+                    "vk",
+                    q_index=q_index,
+                    option_id=option_id,
+                    correct=correct,
+                    event_key=f"vk:answer:event:{dedupe_base}",
+                )
+                if session.finished:
+                    await runtime.business_stats.inc_finish(
+                        "vk",
+                        score=session.score,
+                        title=title_for_score(session.score),
+                        event_key=f"vk:finish:event:{dedupe_base}",
+                    )
                 await runtime.outbox.enqueue(
                     OutboxTask(
                         platform="vk",
                         recipient_id=peer_id,
                         segments=segments,
-                        dedupe_key=f"vk:event:ans:{event_id or time.time_ns()}",
+                        dedupe_key=f"vk:event:ans:{dedupe_base}",
                     )
                 )
             except Exception:

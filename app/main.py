@@ -110,13 +110,15 @@ async def readyz() -> dict[str, object]:
     session_ok = await runtime.session_store.ready()
     outbox_ok = await runtime.outbox.ready()
     media_ok = await runtime.media_cache.ready()
+    biz_ok = await runtime.business_stats.ready()
     queue_size = await runtime.outbox.queue_size()
     return {
-        "status": "ok" if session_ok and outbox_ok and media_ok else "degraded",
+        "status": "ok" if session_ok and outbox_ok and media_ok and biz_ok else "degraded",
         "redis_configured": bool(settings.redis_url),
         "session_store": session_ok,
         "outbox": outbox_ok,
         "media_cache": media_ok,
+        "business_stats": biz_ok,
         "queue_size": queue_size,
     }
 
@@ -124,6 +126,14 @@ async def readyz() -> dict[str, object]:
 @app.get("/metrics")
 async def metrics():
     return metrics_response()
+
+
+@app.get("/stats/business")
+async def business_stats() -> dict[str, object]:
+    queue_size = await runtime.outbox.queue_size()
+    report = await runtime.business_stats.report()
+    report["outbox_queue_size"] = queue_size
+    return report
 
 
 @app.post("/telegram/webhook")
