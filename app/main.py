@@ -89,7 +89,7 @@ async def vk_miniapp_page() -> HTMLResponse:
     if not path.is_file():
         return HTMLResponse("<p>Template static/vk_miniapp/index.html not found.</p>", status_code=404)
     peer = f"-{gid}" if gid else ""
-    html = path.read_text(encoding="utf-8").replace("{{IM_PEER}}", peer)
+    html = path.read_text(encoding="utf-8").replace("{{IM_PEER}}", peer).replace("{{GROUP_ID}}", str(gid))
     # Разрешаем встраивание во iframe клиента VK (без *. — часть браузеров строже парсит wildcard).
     csp = (
         "frame-ancestors https://vk.com https://m.vk.com https://vk.ru https://m.vk.ru "

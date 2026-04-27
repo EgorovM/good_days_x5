@@ -240,6 +240,7 @@
   <script>
     (function () {
       var peer = "{{IM_PEER}}";
+      var groupId = Number("{{GROUP_ID}}") || 0;
       var gid = peer ? String(peer).replace("-", "") : "";
       var urlIm = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
       var urlVkMe = gid ? ("https://vk.me/public" + gid) : "https://vk.com/";
@@ -286,8 +287,22 @@
         var openedViaBridge = false;
         withBridge(function (bridge) {
           openedViaBridge = true;
-          bridge
-            .send("VKWebAppOpenURL", { url: urlIm })
+          var chain = Promise.resolve();
+          // 1) Подписка на сообщество (если ещё не подписан)
+          if (groupId > 0) {
+            chain = chain.then(function () {
+              return bridge.send("VKWebAppJoinGroup", { group_id: groupId }).catch(function () {});
+            });
+            // 2) Разрешение писать пользователю в ЛС от сообщества
+            chain = chain.then(function () {
+              return bridge.send("VKWebAppAllowMessagesFromGroup", { group_id: groupId }).catch(function () {});
+            });
+          }
+          // 3) Открыть диалог
+          chain
+            .then(function () {
+              return bridge.send("VKWebAppOpenURL", { url: urlIm });
+            })
             .catch(function () {
               return bridge.send("VKWebAppOpenURL", { url: urlVkMe });
             })

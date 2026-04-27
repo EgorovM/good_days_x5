@@ -252,6 +252,36 @@ def build_vk_router(settings: Settings) -> APIRouter:
             WEBHOOK_LATENCY.labels("vk", "message_event").observe(time.monotonic() - started)
             return Response(content="ok", media_type="text/plain")
 
+        if body.get("type") == "message_allow":
+            obj = body.get("object") or {}
+            if not isinstance(obj, dict):
+                return Response(content="ok", media_type="text/plain")
+            user_id = int(obj.get("user_id") or 0)
+            if user_id <= 0:
+                return Response(content="ok", media_type="text/plain")
+            try:
+                # После allow из миниаппа сразу начинаем сценарий и отправляем приветствие в ЛС.
+                session, segments = start_game()
+                await runtime.session_store.set("vk", user_id, session)
+                await runtime.business_stats.inc_start(
+                    "vk",
+                    event_key=f"vk:allow-start:{user_id}:{body.get('event_id') or time.time_ns()}",
+                )
+                await runtime.outbox.enqueue(
+                    OutboxTask(
+                        platform="vk",
+                        recipient_id=user_id,
+                        segments=segments,
+                        dedupe_key=f"vk:allow-start:{user_id}:{body.get('event_id') or time.time_ns()}",
+                    )
+                )
+                WEBHOOK_EVENTS.labels("vk", "message_allow", "ok").inc()
+            except Exception:
+                WEBHOOK_EVENTS.labels("vk", "message_allow", "error").inc()
+                log.exception("VK message_allow handling failed user_id=%s", user_id)
+            WEBHOOK_LATENCY.labels("vk", "message_allow").observe(time.monotonic() - started)
+            return Response(content="ok", media_type="text/plain")
+
         return Response(content="ok", media_type="text/plain")
 
     return router
