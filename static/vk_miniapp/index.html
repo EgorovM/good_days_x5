@@ -31,16 +31,44 @@
     (function () {
       var peer = "{{IM_PEER}}";
       var url = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
-      function openChat() {
-        var bridge = window.vkBridge;
+
+      function withBridge(fn) {
+        var bridge = window.vkBridge || window.vkConnect;
         if (bridge && typeof bridge.send === "function") {
-          bridge.send("VKWebAppInit", {}).catch(function () {}).then(function () {
-            return bridge.send("VKWebAppOpenURL", { url: url });
-          }).catch(function () { window.open(url, "_blank"); });
-        } else {
+          try {
+            fn(bridge);
+          } catch (e) {}
+        }
+      }
+
+      /* Без VKWebAppInit сразу после загрузки оболочка VK часто остаётся на «загрузке», хотя HTML уже 200. */
+      function initVkShell() {
+        withBridge(function (bridge) {
+          bridge
+            .send("VKWebAppInit", {})
+            .catch(function () {})
+            .then(function () {
+              return bridge.send("VKWebAppExpand", {}).catch(function () {});
+            });
+        });
+      }
+
+      /* Скрипт bridge в <head> уже выполнился; инициализируем сразу (двойной Init не шлём). */
+      initVkShell();
+
+      function openChat() {
+        withBridge(function (bridge) {
+          bridge
+            .send("VKWebAppOpenURL", { url: url })
+            .catch(function () {
+              window.open(url, "_blank");
+            });
+        });
+        if (!window.vkBridge && !window.vkConnect) {
           window.open(url, "_blank");
         }
       }
+
       document.getElementById("openChat").addEventListener("click", openChat);
     })();
   </script>

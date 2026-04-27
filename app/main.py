@@ -47,10 +47,10 @@ async def vk_miniapp_page() -> HTMLResponse:
         return HTMLResponse("<p>Template static/vk_miniapp/index.html not found.</p>", status_code=404)
     peer = f"-{gid}" if gid else ""
     html = path.read_text(encoding="utf-8").replace("{{IM_PEER}}", peer)
-    # Разрешаем встраивание во iframe клиента VK (иначе белый экран в мини-приложении).
+    # Разрешаем встраивание во iframe клиента VK (без *. — часть браузеров строже парсит wildcard).
     csp = (
-        "frame-ancestors https://vk.com https://*.vk.com https://vk.ru https://*.vk.ru "
-        "https://m.vk.com https://web.vk.com https://oauth.vk.com;"
+        "frame-ancestors https://vk.com https://m.vk.com https://vk.ru https://m.vk.ru "
+        "https://web.vk.com https://oauth.vk.com https://id.vk.com;"
     )
     return HTMLResponse(html, headers={"Content-Security-Policy": csp})
 
