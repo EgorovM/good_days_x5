@@ -240,8 +240,8 @@
   <script>
     (function () {
       var peer = "{{IM_PEER}}";
-      var groupId = Number("{{GROUP_ID}}") || 0;
       var gid = peer ? String(peer).replace("-", "") : "";
+      var groupId = Number(gid) || 0;
       var urlIm = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
       var urlVkMe = gid ? ("https://vk.me/public" + gid) : "https://vk.com/";
 
