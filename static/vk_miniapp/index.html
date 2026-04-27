@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Отличные дни X5</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #19191a; color: #e7e7e7; line-height: 1.45; max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    p { margin: 12px 0 0; }
+    .btn { display: block; width: 100%; margin-top: 20px; padding: 14px 16px; background: #4986cc; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .note { font-size: 12px; color: #999; margin-top: 24px; }
+    a { color: #8bb3e8; }
+  </style>
+  <script src="https://unpkg.com/@vkontakte/vk-bridge@2.14.1/dist/browser.min.js"></script>
+</head>
+<body>
+  <h1>Отличные дни X5</h1>
+  <p>
+    Это не просто викторина — маршрут настоящего ритейла. Проведи банан от плантации до полки: на каждом из восьми этапов выбирай решение,
+    как в боевой системе X5 Tech. ML-прогнозы, роботы на складе, компьютерное зрение, онлайн-мониторинг температуры и другие технологии,
+    которые каждый день работают в «Пятёрочке», «Перекрёстке», «Чижике» и доставке.
+  </p>
+  <p>
+    Ответь на вопросы в чате с ботом, заработай титул — от стажёра до ветерана цепочки — и приходи на финал кампании: там можно обменять
+    активность на мерч и познакомиться с командой X5 Tech поближе.
+  </p>
+  <button type="button" class="btn" id="openChat">Открыть чат с ботом</button>
+  <p class="note">Нажимая кнопку выше, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">Политику Конфиденциальности</a> и даю согласие на обработку персональных данных.</p>
+  <script>
+    (function () {
+      var peer = "{{IM_PEER}}";
+      var url = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
+      function openChat() {
+        var bridge = window.vkBridge;
+        if (bridge && typeof bridge.send === "function") {
+          bridge.send("VKWebAppInit", {}).catch(function () {}).then(function () {
+            return bridge.send("VKWebAppOpenURL", { url: url });
+          }).catch(function () { window.open(url, "_blank"); });
+        } else {
+          window.open(url, "_blank");
+        }
+      }
+      document.getElementById("openChat").addEventListener("click", openChat);
+    })();
+  </script>
+</body>
+</html>

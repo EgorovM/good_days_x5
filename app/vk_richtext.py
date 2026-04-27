@@ -70,7 +70,7 @@ def _question(text: str) -> tuple[str, str | None]:
         if i == 0:
             continue
         stripped = line.lstrip()
-        if not re.match(r"^[A-C]\)", stripped):
+        if not re.match(r"^[A-C]:", stripped):
             continue
         prefix = len(line) - len(stripped)
         s = starts[i] + prefix
@@ -81,14 +81,24 @@ def _question(text: str) -> tuple[str, str | None]:
 
 
 def _feedback(text: str) -> tuple[str, str | None]:
-    st = text.strip()
-    if not st.lower().startswith("верно"):
+    if not text.strip():
         return text, None
-    lead = len(text) - len(text.lstrip())
-    head = st.split(None, 1)[0]
-    start = lead
-    o, l = _utf16_span(text, start, start + len(head))
+    first, _, _rest = text.partition("\n")
+    head = first.strip()
+    hl = head.lower()
+    if not (hl.startswith("верно") or hl.startswith("не совсем")):
+        return text, None
+    o, l = _utf16_span(text, 0, len(first))
     return text, _dump([{"type": "bold", "offset": o, "length": l}])
+
+
+def _finale_bold_line(s: str) -> bool:
+    t = s.lstrip()
+    if t.startswith("Финал") or t.startswith("Банан") or t.startswith("Ты правильно") or t.startswith("Миссия"):
+        return True
+    if t and t[0] in "🥉🥈🥇🏅":
+        return True
+    return False
 
 
 def _finale(text: str) -> tuple[str, str | None]:
@@ -98,8 +108,7 @@ def _finale(text: str) -> tuple[str, str | None]:
     for i, line in enumerate(parts):
         if i > 0:
             pos += 1
-        s = line.strip()
-        if s.startswith("Миссия") or s.startswith("Ты правильно") or s.startswith("🏅"):
+        if _finale_bold_line(line):
             o, l = _utf16_span(text, pos, pos + len(line))
             items.append({"type": "bold", "offset": o, "length": l})
         pos += len(line)

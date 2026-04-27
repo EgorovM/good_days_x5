@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from app.vk_richtext import build_vk_message
-from app.game_engine import apply_answer, start_game
+from app.game_engine import acknowledge_intro, apply_answer, continue_stage, start_game
 from app import runtime
 from app.config import Settings
 from app import vk_client
@@ -91,9 +91,14 @@ def build_vk_router(settings: Settings) -> APIRouter:
                     letter = _option_letter(text)
                     session = runtime.vk_sessions.get(from_id)
                     if letter and session and not session.finished:
-                        session, segments = apply_answer(session, letter)
-                        runtime.vk_sessions[from_id] = session
-                        await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+                        if session.intro_pending:
+                            await _hint("Сначала нажми кнопку «Поехали!» под приветствием.")
+                        elif session.continue_pending:
+                            await _hint("Сначала нажми «Следующий этап» или «Финальный этап», чтобы продолжить.")
+                        else:
+                            session, segments = apply_answer(session, letter)
+                            runtime.vk_sessions[from_id] = session
+                            await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
                     elif session is None or session.finished:
                         await _hint("Чтобы начать квест, напиши: старт или /start")
                     else:
@@ -124,6 +129,7 @@ def build_vk_router(settings: Settings) -> APIRouter:
             elif isinstance(raw_payload, dict):
                 payload = raw_payload
 
+            nav = str(payload.get("n") or "")
             option_id = str(payload.get("o") or "")
             token = settings.vk_api_token or ""
             gid = abs(int(settings.vk_group_id or 0))
@@ -137,10 +143,27 @@ def build_vk_router(settings: Settings) -> APIRouter:
                     log.exception("VK sendMessageEventAnswer failed")
 
             session = runtime.vk_sessions.get(user_id)
-            if session is None or session.finished or not option_id:
-                return Response(content="ok", media_type="text/plain")
 
             try:
+                if nav == "go":
+                    if session is None:
+                        return Response(content="ok", media_type="text/plain")
+                    session, segments = acknowledge_intro(session)
+                    runtime.vk_sessions[user_id] = session
+                    await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+                    return Response(content="ok", media_type="text/plain")
+
+                if nav == "next":
+                    if session is None:
+                        return Response(content="ok", media_type="text/plain")
+                    session, segments = continue_stage(session)
+                    runtime.vk_sessions[user_id] = session
+                    await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)
+                    return Response(content="ok", media_type="text/plain")
+
+                if not option_id or session is None or session.finished:
+                    return Response(content="ok", media_type="text/plain")
+
                 session, segments = apply_answer(session, option_id)
                 runtime.vk_sessions[user_id] = session
                 await send_vk_segments(token=token, group_id=gid, peer_id=peer_id, segments=segments)

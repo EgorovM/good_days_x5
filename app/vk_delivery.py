@@ -11,6 +11,14 @@ from app.paths import STATIC_IMAGES_DIR
 from app import vk_client
 
 
+def _vk_callback_payload(oid: str) -> dict[str, str]:
+    if oid.startswith("nav:"):
+        return {"n": oid[4:]}
+    if oid.startswith("ans:"):
+        return {"o": oid[4:]}
+    return {"o": oid}
+
+
 def _vk_keyboard_json(options: list[tuple[str, str]] | None) -> str | None:
     if not options:
         return None
@@ -21,7 +29,7 @@ def _vk_keyboard_json(options: list[tuple[str, str]] | None) -> str | None:
                 "action": {
                     "type": "callback",
                     "label": label[:40],
-                    "payload": json.dumps({"o": oid}),
+                    "payload": json.dumps(_vk_callback_payload(oid), ensure_ascii=False, separators=(",", ":")),
                 },
                 "color": "secondary",
             }

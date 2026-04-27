@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import Update
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
@@ -34,6 +36,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="X5 Good Days bot", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(build_vk_router(settings))
+
+
+@app.get("/vk/miniapp", response_class=HTMLResponse)
+async def vk_miniapp_page() -> HTMLResponse:
+    """Статическая страница для VK Mini App: кнопка открывает чат с сообществом (настройте URL приложения в кабинете VK)."""
+    gid = abs(int(settings.vk_group_id or 0))
+    path = Path(__file__).resolve().parent.parent / "static" / "vk_miniapp" / "index.html"
+    if not path.is_file():
+        return HTMLResponse("<p>Template static/vk_miniapp/index.html not found.</p>", status_code=404)
+    peer = f"-{gid}" if gid else ""
+    html = path.read_text(encoding="utf-8").replace("{{IM_PEER}}", peer)
+    return HTMLResponse(html)
 
 
 @app.get("/")
