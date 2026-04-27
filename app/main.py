@@ -5,6 +5,7 @@ from pathlib import Path
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.types import Update
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -13,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app import runtime
+from app import vk_client
 from app.telegram_bot import build_tg_dispatcher
 from app.vk_router import build_vk_router
 
@@ -23,14 +25,17 @@ runtime.settings = settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if settings.has_telegram:
+        tg_session = AiohttpSession(limit=250, timeout=35.0)
         app.state.tg_bot = Bot(
             settings.telegram_bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            session=tg_session,
         )
         app.state.tg_dp = build_tg_dispatcher()
     yield
     if getattr(app.state, "tg_bot", None):
         await app.state.tg_bot.session.close()
+    await vk_client.aclose_http_client()
 
 
 app = FastAPI(title="X5 Good Days bot", lifespan=lifespan)

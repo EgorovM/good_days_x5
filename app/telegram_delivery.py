@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+
 from aiogram import Bot
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
-from aiogram.types import FSInputFile, InlineKeyboardButton, InlineKeyboardMarkup, URLInputFile
+from aiogram.types import BufferedInputFile, InlineKeyboardButton, InlineKeyboardMarkup, URLInputFile
 
 from app.formatting import esc, format_segment_html
 from app.game_engine import Segment
@@ -42,9 +44,10 @@ async def send_telegram_segments(bot: Bot, chat_id: int, segments: list[Segment]
         local = (STATIC_IMAGES_DIR / seg.image) if seg.image else None
 
         if seg.image and local and local.is_file():
+            photo_bytes = await asyncio.to_thread(local.read_bytes)
             await bot.send_photo(
                 chat_id,
-                FSInputFile(local),
+                BufferedInputFile(photo_bytes, filename=seg.image),
                 caption=caption_html,
                 parse_mode=ParseMode.HTML if caption_html else None,
                 reply_markup=kb,

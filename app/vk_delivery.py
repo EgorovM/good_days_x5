@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
 from app import runtime
@@ -44,11 +45,12 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
         attachment: str | None = None
         local = (STATIC_IMAGES_DIR / seg.image) if seg.image else None
         if seg.image and local and local.is_file():
+            data = await asyncio.to_thread(local.read_bytes)
             attachment = await vk_client.vk_upload_photo_bytes(
                 token,
                 group_id=group_id,
                 peer_id=peer_id,
-                data=local.read_bytes(),
+                data=data,
                 filename=seg.image,
             )
         elif seg.image and url:
