@@ -2,31 +2,241 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Отличные дни X5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #19191a; color: #e7e7e7; line-height: 1.45; max-width: 520px; margin: 0 auto; }
-    h1 { font-size: 20px; margin: 0 0 12px; }
-    p { margin: 12px 0 0; }
-    .btn { display: block; width: 100%; margin-top: 20px; padding: 14px 16px; background: #4986cc; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
-    .note { font-size: 12px; color: #999; margin-top: 24px; }
-    a { color: #8bb3e8; }
+    :root {
+      --x5-bg: #070809;
+      --x5-surface: #0f1217;
+      --x5-surface-2: #161b22;
+      --x5-border: rgba(0, 168, 98, 0.28);
+      --x5-green: #00a862;
+      --x5-green-bright: #00c978;
+      --x5-green-dim: #007a4a;
+      --x5-text: #eef1f4;
+      --x5-muted: #8b939e;
+      --x5-link: #5ee9b5;
+      --x5-glow: rgba(0, 201, 120, 0.12);
+      --x5-radius: 14px;
+      --x5-radius-sm: 10px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--x5-text);
+      background: var(--x5-bg);
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .shell {
+      position: relative;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: calc(20px + var(--safe-top)) 20px calc(28px + var(--safe-bottom));
+      overflow-x: hidden;
+    }
+
+    .shell::before {
+      content: "";
+      position: fixed;
+      inset: -40% -20% auto -20%;
+      height: 70vmin;
+      background:
+        radial-gradient(ellipse 80% 55% at 50% 0%, var(--x5-glow), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 10%, rgba(0, 120, 200, 0.06), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 24px;
+      mask-image: linear-gradient(to bottom, black 0%, transparent 35%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(0, 168, 98, 0.2), rgba(0, 168, 98, 0.06));
+      border: 1px solid var(--x5-border);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--x5-green-bright);
+    }
+
+    .brand-mark::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--x5-green-bright);
+      box-shadow: 0 0 10px var(--x5-green-bright);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(22px, 5.5vw, 26px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .lede {
+      margin: 0 0 22px;
+      font-size: 14px;
+      color: var(--x5-muted);
+      font-weight: 500;
+      max-width: 42ch;
+    }
+
+    .card {
+      background: linear-gradient(165deg, var(--x5-surface) 0%, var(--x5-surface-2) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--x5-radius);
+      padding: 20px 18px;
+      box-shadow:
+        0 0 0 1px rgba(0, 168, 98, 0.08),
+        0 24px 48px -24px rgba(0, 0, 0, 0.55);
+    }
+
+    .card p {
+      margin: 0 0 14px;
+      color: #c9ced6;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .card p strong {
+      color: var(--x5-text);
+      font-weight: 600;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 22px;
+      padding: 15px 18px;
+      border: none;
+      border-radius: var(--x5-radius-sm);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(180deg, var(--x5-green-bright) 0%, var(--x5-green) 100%);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.15) inset,
+        0 8px 24px -6px rgba(0, 168, 98, 0.45);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--x5-link);
+      outline-offset: 3px;
+    }
+
+    .btn svg {
+      flex-shrink: 0;
+      opacity: 0.95;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--x5-muted);
+    }
+
+    a {
+      color: var(--x5-link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(94, 233, 181, 0.35);
+    }
+
+    a:hover {
+      border-bottom-color: var(--x5-link);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@vkontakte/vk-bridge@2.14.1/dist/browser.min.js"></script>
 </head>
 <body>
-  <h1>Отличные дни X5</h1>
-  <p>
-    Это не просто викторина — маршрут настоящего ритейла. Проведи банан от плантации до полки: на каждом из восьми этапов выбирай решение,
-    как в боевой системе X5 Tech. ML-прогнозы, роботы на складе, компьютерное зрение, онлайн-мониторинг температуры и другие технологии,
-    которые каждый день работают в «Пятёрочке», «Перекрёстке», «Чижике» и доставке.
-  </p>
-  <p>
-    Ответь на вопросы в чате с ботом, заработай титул — от стажёра до ветерана цепочки — и приходи на финал кампании: там можно обменять
-    активность на мерч и познакомиться с командой X5 Tech поближе.
-  </p>
-  <button type="button" class="btn" id="openChat">Открыть чат с ботом</button>
-  <p class="note">Нажимая кнопку выше, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">Политику Конфиденциальности</a> и даю согласие на обработку персональных данных.</p>
+  <div class="shell">
+    <div class="content">
+      <div class="brand-row">
+        <span class="brand-mark">X5 Tech</span>
+      </div>
+      <h1>Отличные дни X5</h1>
+      <p class="lede">Цифровой маршрут от плантации до полки — в духе технологий, которые каждый день работают в ритейле X5.</p>
+
+      <div class="card">
+        <p>
+          Это не просто викторина — маршрут настоящего ритейла. Проведи банан от плантации до полки: на каждом из восьми этапов выбирай решение,
+          как в <strong>боевой системе X5 Tech</strong>. ML-прогнозы, роботы на складе, компьютерное зрение, онлайн-мониторинг температуры и другие технологии,
+          которые каждый день работают в «Пятёрочке», «Перекрёстке», «Чижике» и доставке.
+        </p>
+        <p>
+          Ответь на вопросы в чате с ботом, заработай титул — от стажёра до ветерана цепочки — и приходи на финал кампании: там можно обменять
+          активность на мерч и познакомиться с командой <strong>X5 Tech</strong> поближе.
+        </p>
+      </div>
+
+      <button type="button" class="btn" id="openChat" aria-label="Открыть чат с ботом ВКонтакте">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.1771 17.6006L2.58147 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M8 12H8.01M12 12H12.01M16 12H16.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        Открыть чат с ботом
+      </button>
+
+      <p class="note">Нажимая кнопку выше, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">Политику Конфиденциальности</a> и даю согласие на обработку персональных данных.</p>
+    </div>
+  </div>
   <script>
     (function () {
       var peer = "{{IM_PEER}}";

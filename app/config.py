@@ -7,6 +7,11 @@ class Settings(BaseSettings):
 
     # Публичный HTTPS-URL без завершающего слэша — картинки: {PUBLIC_BASE_URL}/static/images/...
     public_base_url: str | None = Field(default=None, validation_alias="PUBLIC_BASE_URL")
+    redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
+    session_ttl_seconds: int = Field(default=86_400, validation_alias="SESSION_TTL_SECONDS")
+    outbox_max_attempts: int = Field(default=4, validation_alias="OUTBOX_MAX_ATTEMPTS")
+    worker_concurrency: int = Field(default=24, validation_alias="WORKER_CONCURRENCY")
+    dry_run_delivery: bool = Field(default=False, validation_alias="DRY_RUN_DELIVERY")
 
     telegram_bot_token: str | None = Field(default=None, validation_alias="TELEGRAM_BOT_TOKEN")
     telegram_webhook_secret: str | None = Field(default=None, validation_alias="TELEGRAM_WEBHOOK_SECRET")
@@ -26,7 +31,7 @@ class Settings(BaseSettings):
     vk_callback_confirmation: str | None = Field(default=None, validation_alias="VK_CALLBACK_CONFIRMATION")
     vk_secret: str | None = Field(default=None, validation_alias="VK_SECRET")
 
-    @field_validator("vk_api_token", "vk_callback_confirmation", "vk_secret", mode="before")
+    @field_validator("redis_url", "vk_api_token", "vk_callback_confirmation", "vk_secret", mode="before")
     @classmethod
     def _strip_optional_vk_strings(cls, v: object) -> object:
         if v is None:

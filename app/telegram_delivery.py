@@ -11,6 +11,7 @@ from app.formatting import esc, format_segment_html
 from app.game_engine import Segment
 from app import runtime
 from app.media import image_public_url
+from app.media_cache import media_stamp
 from app.paths import STATIC_IMAGES_DIR
 
 TG_CAPTION_MAX = 1024
@@ -44,14 +45,27 @@ async def send_telegram_segments(bot: Bot, chat_id: int, segments: list[Segment]
         local = (STATIC_IMAGES_DIR / seg.image) if seg.image else None
 
         if seg.image and local and local.is_file():
+            stamp = media_stamp(local)
+            cached_file_id = await runtime.media_cache.get("tg", seg.image, stamp)
+            if cached_file_id:
+                await bot.send_photo(
+                    chat_id,
+                    cached_file_id,
+                    caption=caption_html,
+                    parse_mode=ParseMode.HTML if caption_html else None,
+                    reply_markup=kb,
+                )
+                continue
             photo_bytes = await asyncio.to_thread(local.read_bytes)
-            await bot.send_photo(
+            msg = await bot.send_photo(
                 chat_id,
                 BufferedInputFile(photo_bytes, filename=seg.image),
                 caption=caption_html,
                 parse_mode=ParseMode.HTML if caption_html else None,
                 reply_markup=kb,
             )
+            if msg.photo:
+                await runtime.media_cache.set("tg", seg.image, stamp, msg.photo[-1].file_id)
             continue
 
         url = image_public_url(base, seg.image)

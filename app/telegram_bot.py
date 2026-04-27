@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 
 from app.game_engine import acknowledge_intro, apply_answer, continue_stage, start_game
 from app import runtime
-from app.telegram_delivery import send_telegram_segments
+from app.outbox import OutboxTask
 
 
 def build_tg_router() -> Router:
@@ -18,8 +18,15 @@ def build_tg_router() -> Router:
             return
         uid = message.from_user.id
         session, segments = start_game()
-        runtime.tg_sessions[uid] = session
-        await send_telegram_segments(bot, message.chat.id, segments)
+        await runtime.session_store.set("tg", uid, session)
+        await runtime.outbox.enqueue(
+            OutboxTask(
+                platform="tg",
+                recipient_id=message.chat.id,
+                segments=segments,
+                dedupe_key=f"tg:start:{uid}:{message.message_id}",
+            )
+        )
 
     @router.callback_query(F.data.startswith("nav:"))
     async def on_nav(query: CallbackQuery, bot: Bot) -> None:
@@ -27,7 +34,7 @@ def build_tg_router() -> Router:
             return
         code = (query.data or "")[4:]
         uid = query.from_user.id
-        session = runtime.tg_sessions.get(uid)
+        session = await runtime.session_store.get("tg", uid)
         if session is None:
             await query.answer("Сначала нажми /start", show_alert=True)
             return
@@ -38,9 +45,16 @@ def build_tg_router() -> Router:
         else:
             await query.answer()
             return
-        runtime.tg_sessions[uid] = session
+        await runtime.session_store.set("tg", uid, session)
         await query.answer()
-        await send_telegram_segments(bot, query.message.chat.id, segments)
+        await runtime.outbox.enqueue(
+            OutboxTask(
+                platform="tg",
+                recipient_id=query.message.chat.id,
+                segments=segments,
+                dedupe_key=f"tg:nav:{query.id}",
+            )
+        )
 
     @router.callback_query(F.data.startswith("ans:"))
     async def on_answer(query: CallbackQuery, bot: Bot) -> None:
@@ -52,14 +66,21 @@ def build_tg_router() -> Router:
             return
         option_id = parts[1]
         uid = query.from_user.id
-        session = runtime.tg_sessions.get(uid)
+        session = await runtime.session_store.get("tg", uid)
         if session is None or session.finished:
             await query.answer("Сначала нажми /start", show_alert=True)
             return
         session, segments = apply_answer(session, option_id)
-        runtime.tg_sessions[uid] = session
+        await runtime.session_store.set("tg", uid, session)
         await query.answer()
-        await send_telegram_segments(bot, query.message.chat.id, segments)
+        await runtime.outbox.enqueue(
+            OutboxTask(
+                platform="tg",
+                recipient_id=query.message.chat.id,
+                segments=segments,
+                dedupe_key=f"tg:ans:{query.id}",
+            )
+        )
 
     return router
 

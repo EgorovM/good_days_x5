@@ -8,6 +8,7 @@ from app.formatting import vk_plain
 from app.game_engine import Segment
 from app.vk_richtext import build_vk_message
 from app.media import image_public_url
+from app.media_cache import media_stamp
 from app.paths import STATIC_IMAGES_DIR
 from app import vk_client
 
@@ -45,14 +46,19 @@ async def send_vk_segments(*, token: str, group_id: int, peer_id: int, segments:
         attachment: str | None = None
         local = (STATIC_IMAGES_DIR / seg.image) if seg.image else None
         if seg.image and local and local.is_file():
-            data = await asyncio.to_thread(local.read_bytes)
-            attachment = await vk_client.vk_upload_photo_bytes(
-                token,
-                group_id=group_id,
-                peer_id=peer_id,
-                data=data,
-                filename=seg.image,
-            )
+            stamp = media_stamp(local)
+            attachment = await runtime.media_cache.get("vk", seg.image, stamp)
+            if not attachment:
+                data = await asyncio.to_thread(local.read_bytes)
+                attachment = await vk_client.vk_upload_photo_bytes(
+                    token,
+                    group_id=group_id,
+                    peer_id=peer_id,
+                    data=data,
+                    filename=seg.image,
+                )
+                if attachment:
+                    await runtime.media_cache.set("vk", seg.image, stamp, attachment)
         elif seg.image and url:
             attachment = await vk_client.vk_upload_photo_from_url(
                 token, group_id=group_id, peer_id=peer_id, image_url=url

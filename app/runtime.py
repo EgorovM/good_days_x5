@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from app.config import Settings
-from app.game_engine import GameSession
+from app.media_cache import MediaCache, MemoryMediaCache
+from app.outbox import MemoryOutbox, Outbox
+from app.session_store import MemorySessionStore, SessionStore
 
 settings: Settings | None = None
-tg_sessions: dict[int, GameSession] = {}
-vk_sessions: dict[int, GameSession] = {}
+session_store: SessionStore = MemorySessionStore()
+outbox: Outbox = MemoryOutbox()
+media_cache: MediaCache = MemoryMediaCache()
