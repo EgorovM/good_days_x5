@@ -181,6 +181,12 @@
       outline-offset: 3px;
     }
 
+    .btn[disabled] {
+      cursor: wait;
+      opacity: 0.78;
+      filter: saturate(0.85);
+    }
+
     .btn svg {
       flex-shrink: 0;
       opacity: 0.95;
@@ -191,6 +197,25 @@
       font-size: 12px;
       line-height: 1.5;
       color: var(--x5-muted);
+    }
+
+    .status {
+      min-height: 20px;
+      margin: 12px 0 0;
+      color: var(--x5-link);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .fallback-link {
+      display: none;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .fallback-link.is-visible {
+      display: inline-block;
     }
 
     a {
@@ -233,6 +258,8 @@
         </svg>
         Открыть чат с ботом
       </button>
+      <p class="status" id="chatStatus" aria-live="polite"></p>
+      <a class="fallback-link" id="chatFallback" href="#" target="_top" rel="noopener">Открыть диалог вручную</a>
 
       <p class="note">Нажимая кнопку выше, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">Политику Конфиденциальности</a> и даю согласие на обработку персональных данных.</p>
     </div>
@@ -244,6 +271,19 @@
       var groupId = Number(gid) || 0;
       var urlIm = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
       var urlVkMe = gid ? ("https://vk.me/public" + gid) : "https://vk.com/";
+      var button = document.getElementById("openChat");
+      var statusNode = document.getElementById("chatStatus");
+      var fallbackLink = document.getElementById("chatFallback");
+      fallbackLink.href = urlVkMe;
+
+      function setStatus(text) {
+        statusNode.textContent = text || "";
+      }
+
+      function setBusy(isBusy) {
+        button.disabled = isBusy;
+        button.setAttribute("aria-busy", isBusy ? "true" : "false");
+      }
 
       function withBridge(fn) {
         var bridge = window.vkBridge || window.vkConnect;
@@ -271,6 +311,8 @@
 
       function openExternalFallback() {
         // На мобильном VK window.open может игнорироваться; location.href надёжнее.
+        setStatus("Если чат не открылся автоматически, нажми ссылку ниже.");
+        fallbackLink.classList.add("is-visible");
         try {
           window.location.href = urlIm;
           setTimeout(function () {
@@ -285,37 +327,58 @@
 
       function openChat() {
         var openedViaBridge = false;
+        setBusy(true);
+        setStatus("Готовим чат с ботом…");
         withBridge(function (bridge) {
           openedViaBridge = true;
           var chain = Promise.resolve();
           // 1) Подписка на сообщество (если ещё не подписан)
           if (groupId > 0) {
             chain = chain.then(function () {
+              setStatus("Подписываем на сообщество…");
               return bridge.send("VKWebAppJoinGroup", { group_id: groupId }).catch(function () {});
             });
             // 2) Разрешение писать пользователю в ЛС от сообщества
             chain = chain.then(function () {
-              return bridge.send("VKWebAppAllowMessagesFromGroup", { group_id: groupId }).catch(function () {});
+              setStatus("Запрашиваем разрешение на сообщения…");
+              return bridge.send("VKWebAppAllowMessagesFromGroup", {
+                group_id: groupId,
+                key: "good_days_x5"
+              }).catch(function () {});
             });
           }
-          // 3) Открыть диалог
+          // 3) Открыть диалог. После AllowMessages бэк уже отправляет первое сообщение.
           chain
             .then(function () {
+              setStatus("Открываем диалог…");
               return bridge.send("VKWebAppOpenURL", { url: urlIm });
             })
             .catch(function () {
               return bridge.send("VKWebAppOpenURL", { url: urlVkMe });
             })
+            .then(function () {
+              // Если клиент открыл диалог поверх миниаппа, закрывать не понадобится.
+              // Если нет — аккуратно закрываем миниапп, чтобы пользователь оказался в приложении VK.
+              setTimeout(function () {
+                bridge.send("VKWebAppClose", { status: "success" }).catch(function () {});
+              }, 900);
+            })
             .catch(function () {
               openExternalFallback();
+            })
+            .finally(function () {
+              setTimeout(function () {
+                setBusy(false);
+              }, 1200);
             });
         });
         if (!openedViaBridge) {
           openExternalFallback();
+          setBusy(false);
         }
       }
 
-      document.getElementById("openChat").addEventListener("click", openChat);
+      button.addEventListener("click", openChat);
     })();
   </script>
 </body>

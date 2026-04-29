@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Генерирует простые PNG-заглушки в static/images (без зависимостей)."""
+"""Генерирует простые заглушки в static/images (PNG без зависимостей, JPEG через macOS `sips`)."""
 
 from __future__ import annotations
 
+import platform
 import struct
+import subprocess
+import sys
 import zlib
 from pathlib import Path
 
@@ -24,26 +27,55 @@ def write_solid_png(path: Path, width: int, height: int, r: int, g: int, b: int)
     path.write_bytes(data)
 
 
+def _png_to_jpeg(png_path: Path, jpg_path: Path, quality: int = 75) -> None:
+    subprocess.run(
+        [
+            "sips",
+            "-s",
+            "format",
+            "jpeg",
+            "-s",
+            "formatOptions",
+            str(quality),
+            str(png_path),
+            "--out",
+            str(jpg_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
 def main() -> None:
     root = Path(__file__).resolve().parent.parent / "static" / "images"
     root.mkdir(parents=True, exist_ok=True)
 
     stages = [
-        ("stage01.png", (255, 224, 102)),
-        ("stage02.png", (255, 210, 90)),
-        ("stage03.png", (245, 200, 80)),
-        ("stage04.png", (235, 190, 70)),
-        ("stage05.png", (225, 180, 60)),
-        ("stage06.png", (215, 170, 50)),
-        ("stage07.png", (205, 160, 45)),
-        ("stage08.png", (195, 150, 40)),
+        ("stage01.jpg", (255, 224, 102)),
+        ("stage02.jpg", (255, 210, 90)),
+        ("stage03.jpg", (245, 200, 80)),
+        ("stage04.jpg", (235, 190, 70)),
+        ("stage05.jpg", (225, 180, 60)),
+        ("stage06.jpg", (215, 170, 50)),
+        ("stage07.jpg", (205, 160, 45)),
+        ("stage08.jpg", (195, 150, 40)),
     ]
-    for name, rgb in stages:
-        write_solid_png(root / name, 480, 270, *rgb)
 
-    write_solid_png(root / "tier_bronze.png", 480, 270, 180, 110, 60)
-    write_solid_png(root / "tier_silver.png", 480, 270, 190, 195, 200)
-    write_solid_png(root / "tier_gold.png", 480, 270, 255, 200, 60)
+    if platform.system() != "Darwin":
+        print(
+            "Пропуск: JPEG-заглушки этапов нужен macOS (`sips`). "
+            "Положите в static/images файлы stage01.jpg … stage08.jpg.",
+            file=sys.stderr,
+        )
+        return
+
+    tmp = root / "_gen_stage_tmp.png"
+    try:
+        for name, rgb in stages:
+            write_solid_png(tmp, 480, 270, *rgb)
+            _png_to_jpeg(tmp, root / name, quality=75)
+    finally:
+        tmp.unlink(missing_ok=True)
 
     print("Written:", root)
 
