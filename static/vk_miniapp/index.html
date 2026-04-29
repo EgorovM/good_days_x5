@@ -6,22 +6,24 @@
   <title>Отличные дни X5</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --x5-bg: #070809;
-      --x5-surface: #0f1217;
-      --x5-surface-2: #161b22;
-      --x5-border: rgba(0, 168, 98, 0.28);
-      --x5-green: #00a862;
-      --x5-green-bright: #00c978;
-      --x5-green-dim: #007a4a;
-      --x5-text: #eef1f4;
-      --x5-muted: #8b939e;
-      --x5-link: #5ee9b5;
-      --x5-glow: rgba(0, 201, 120, 0.12);
-      --x5-radius: 14px;
-      --x5-radius-sm: 10px;
+      --bg-top: #fafbfc;
+      --bg-mid: #eef1f4;
+      --bg-floor: #e4e8ec;
+      --lime: #7cb342;
+      --lime-dark: #689f38;
+      --lime-soft: rgba(124, 179, 66, 0.14);
+      --glass: rgba(255, 255, 255, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.95);
+      --text: #1a1f26;
+      --muted: #5c6570;
+      --banana: #f5d547;
+      --radius: 20px;
+      --radius-sm: 14px;
+      --shadow-soft: 0 20px 50px -20px rgba(26, 31, 38, 0.18);
+      --shadow-lime: 0 12px 32px -8px rgba(124, 179, 66, 0.35);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -31,44 +33,32 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      font-family: "Manrope", system-ui, -apple-system, sans-serif;
       font-size: 15px;
       line-height: 1.55;
-      color: var(--x5-text);
-      background: var(--x5-bg);
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 45%, var(--bg-floor) 100%);
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
     }
 
     .shell {
       position: relative;
-      max-width: 520px;
+      max-width: 480px;
       margin: 0 auto;
-      padding: calc(20px + var(--safe-top)) 20px calc(28px + var(--safe-bottom));
+      padding: calc(16px + var(--safe-top)) 18px calc(24px + var(--safe-bottom));
       overflow-x: hidden;
     }
 
+    /* лёгкая «терраццо»-зернистость как на подставке в визуале */
     .shell::before {
       content: "";
       position: fixed;
-      inset: -40% -20% auto -20%;
-      height: 70vmin;
-      background:
-        radial-gradient(ellipse 80% 55% at 50% 0%, var(--x5-glow), transparent 55%),
-        radial-gradient(ellipse 50% 40% at 100% 10%, rgba(0, 120, 200, 0.06), transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .shell::after {
-      content: "";
-      position: fixed;
       inset: 0;
-      background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 24px;
-      mask-image: linear-gradient(to bottom, black 0%, transparent 35%);
+      opacity: 0.04;
       pointer-events: none;
       z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
     .content {
@@ -76,78 +66,96 @@
       z-index: 1;
     }
 
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .brand-mark {
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 8px;
+      padding: 7px 14px;
       border-radius: 999px;
-      background: linear-gradient(135deg, rgba(0, 168, 98, 0.2), rgba(0, 168, 98, 0.06));
-      border: 1px solid var(--x5-border);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
+      font-weight: 800;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--x5-green-bright);
+      color: var(--lime-dark);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 14px;
     }
 
-    .brand-mark::before {
+    .badge::before {
       content: "";
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--x5-green-bright);
-      box-shadow: 0 0 10px var(--x5-green-bright);
+      background: linear-gradient(135deg, var(--banana), #e6b800);
+      box-shadow: 0 0 0 2px var(--lime-soft);
+    }
+
+    .hero {
+      position: relative;
+      margin: 0 0 18px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: linear-gradient(145deg, #fff 0%, #f0f3f6 100%);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow-soft), 0 0 0 1px rgba(124, 179, 66, 0.08);
+    }
+
+    .hero img {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
+    }
+
+    .hero-glow {
+      position: absolute;
+      inset: auto 10% -30% 10%;
+      height: 45%;
+      background: radial-gradient(ellipse at center, var(--lime-soft), transparent 70%);
+      pointer-events: none;
     }
 
     h1 {
-      margin: 0 0 10px;
-      font-size: clamp(22px, 5.5vw, 26px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
+      margin: 0 0 8px;
+      font-size: clamp(22px, 5.2vw, 28px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
     }
 
     .lede {
-      margin: 0 0 22px;
+      margin: 0 0 20px;
       font-size: 14px;
-      color: var(--x5-muted);
-      font-weight: 500;
-      max-width: 42ch;
+      font-weight: 600;
+      color: var(--muted);
+      max-width: 38ch;
     }
 
     .card {
-      background: linear-gradient(165deg, var(--x5-surface) 0%, var(--x5-surface-2) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: var(--x5-radius);
-      padding: 20px 18px;
-      box-shadow:
-        0 0 0 1px rgba(0, 168, 98, 0.08),
-        0 24px 48px -24px rgba(0, 0, 0, 0.55);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-soft);
     }
 
     .card p {
-      margin: 0 0 14px;
-      color: #c9ced6;
+      margin: 0 0 12px;
       font-size: 14px;
+      font-weight: 500;
+      color: #3a424d;
       line-height: 1.6;
     }
 
-    .card p:last-child {
-      margin-bottom: 0;
-    }
+    .card p:last-child { margin-bottom: 0; }
 
-    .card p strong {
-      color: var(--x5-text);
-      font-weight: 600;
-    }
+    .card p strong { color: var(--text); font-weight: 700; }
 
     .btn {
       display: flex;
@@ -155,77 +163,94 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      margin-top: 22px;
+      margin-top: 16px;
       padding: 15px 18px;
       border: none;
-      border-radius: var(--x5-radius-sm);
+      border-radius: var(--radius-sm);
       font-family: inherit;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       color: #fff;
       cursor: pointer;
-      background: linear-gradient(180deg, var(--x5-green-bright) 0%, var(--x5-green) 100%);
+      background: linear-gradient(180deg, #8bc34a 0%, var(--lime) 55%, var(--lime-dark) 100%);
       box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.15) inset,
-        0 8px 24px -6px rgba(0, 168, 98, 0.45);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        0 1px 0 rgba(255, 255, 255, 0.25) inset,
+        var(--shadow-lime);
+      transition: transform 0.14s ease, filter 0.14s ease;
     }
 
     .btn:active {
       transform: scale(0.98);
-      filter: brightness(0.95);
+      filter: brightness(0.96);
     }
 
     .btn:focus-visible {
-      outline: 2px solid var(--x5-link);
-      outline-offset: 3px;
+      outline: 3px solid rgba(124, 179, 66, 0.45);
+      outline-offset: 2px;
     }
 
     .btn[disabled] {
       cursor: wait;
-      opacity: 0.78;
-      filter: saturate(0.85);
+      opacity: 0.75;
     }
 
-    .btn svg {
-      flex-shrink: 0;
-      opacity: 0.95;
+    .btn-ghost {
+      margin-top: 12px;
+      background: #fff;
+      color: var(--lime-dark);
+      border: 2px solid rgba(124, 179, 66, 0.45);
+      box-shadow: 0 4px 16px -4px rgba(26, 31, 38, 0.08);
+    }
+
+    .btn-ghost:active {
+      filter: brightness(0.98);
+    }
+
+    .step2 {
+      display: none;
+      margin-top: 20px;
+      animation: rise 0.35s ease;
+    }
+
+    .step2.is-visible {
+      display: block;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step2-hint {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
     }
 
     .note {
-      margin-top: 20px;
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--x5-muted);
-    }
-
-    .status {
-      min-height: 20px;
-      margin: 12px 0 0;
-      color: var(--x5-link);
-      font-size: 13px;
+      margin-top: 18px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--muted);
       font-weight: 500;
     }
 
-    .fallback-link {
-      display: none;
-      margin-top: 10px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .fallback-link.is-visible {
-      display: inline-block;
-    }
-
-    a {
-      color: var(--x5-link);
+    .note a {
+      color: var(--lime-dark);
+      font-weight: 700;
       text-decoration: none;
-      border-bottom: 1px solid rgba(94, 233, 181, 0.35);
+      border-bottom: 1px solid rgba(104, 159, 56, 0.35);
     }
 
-    a:hover {
-      border-bottom-color: var(--x5-link);
+    .status {
+      min-height: 18px;
+      margin: 10px 0 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--lime-dark);
+      text-align: center;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@vkontakte/vk-bridge@2.14.1/dist/browser.min.js"></script>
@@ -233,68 +258,59 @@
 <body>
   <div class="shell">
     <div class="content">
-      <div class="brand-row">
-        <span class="brand-mark">X5 Tech</span>
+      <span class="badge">X5 Tech</span>
+
+      <div class="hero">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <img src="/static/images/stage01.jpg" width="1200" height="1200" alt="Банан и данные: технологии ритейла" loading="eager" decoding="async" />
       </div>
+
       <h1>Отличные дни X5</h1>
-      <p class="lede">Цифровой маршрут от плантации до полки — в духе технологий, которые каждый день работают в ритейле X5.</p>
+      <p class="lede">Маршрут банана от плантации до полки — через реальные решения X5 Tech.</p>
 
-      <div class="card">
+      <div class="card" id="step1">
         <p>
-          Это не просто викторина — маршрут настоящего ритейла. Проведи банан от плантации до полки: на каждом из восьми этапов выбирай решение,
-          как в <strong>боевой системе X5 Tech</strong>. ML-прогнозы, роботы на складе, компьютерное зрение, онлайн-мониторинг температуры и другие технологии,
-          которые каждый день работают в «Пятёрочке», «Перекрёстке», «Чижике» и доставке.
+          Это не просто викторина: на <strong>восьми этапах</strong> ты выбираешь, как вести поставку — ML, роботы, компьютерное зрение и мониторинг, как в «Пятёрочке», «Перекрёстке» и «Чижике».
         </p>
         <p>
-          Ответь на вопросы в чате с ботом, заработай титул — от стажёра до ветерана цепочки — и приходи на финал кампании: там можно обменять
-          активность на мерч и познакомиться с командой <strong>X5 Tech</strong> поближе.
+          Дальше откроется диалог с ботом — там вопросы и титулы от стажёра до ветерана цепочки.
         </p>
+        <button type="button" class="btn" id="btnOk">Окей</button>
       </div>
 
-      <button type="button" class="btn" id="openChat" aria-label="Открыть чат с ботом ВКонтакте">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.1771 17.6006L2.58147 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" stroke="currentColor" stroke-width="1.75"/>
-          <path d="M8 12H8.01M12 12H12.01M16 12H16.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-        Открыть чат с ботом
-      </button>
-      <p class="status" id="chatStatus" aria-live="polite"></p>
-      <a class="fallback-link" id="chatFallback" href="#" target="_top" rel="noopener">Открыть диалог вручную</a>
+      <div class="step2" id="step2" aria-live="polite">
+        <p class="step2-hint">Теперь открой сообщения с ботом — квест идёт в чате.</p>
+        <button type="button" class="btn btn-ghost" id="btnMessages">Открыть сообщения</button>
+        <p class="status" id="goStatus"></p>
+      </div>
 
-      <p class="note">Нажимая кнопку выше, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">Политику Конфиденциальности</a> и даю согласие на обработку персональных данных.</p>
+      <p class="note">Нажимая кнопки, я принимаю <a href="https://vk.com/legal" target="_blank" rel="noopener">политику конфиденциальности</a> VK и даю согласие на обработку персональных данных.</p>
     </div>
   </div>
   <script>
     (function () {
       var peer = "{{IM_PEER}}";
       var gid = peer ? String(peer).replace("-", "") : "";
-      var groupId = Number(gid) || 0;
       var urlIm = peer ? ("https://vk.com/im?sel=" + encodeURIComponent(peer)) : "https://vk.com/";
       var urlVkMe = gid ? ("https://vk.me/public" + gid) : "https://vk.com/";
-      var button = document.getElementById("openChat");
-      var statusNode = document.getElementById("chatStatus");
-      var fallbackLink = document.getElementById("chatFallback");
-      fallbackLink.href = urlVkMe;
 
-      function setStatus(text) {
-        statusNode.textContent = text || "";
-      }
-
-      function setBusy(isBusy) {
-        button.disabled = isBusy;
-        button.setAttribute("aria-busy", isBusy ? "true" : "false");
-      }
+      var step1 = document.getElementById("step1");
+      var step2 = document.getElementById("step2");
+      var btnOk = document.getElementById("btnOk");
+      var btnMessages = document.getElementById("btnMessages");
+      var goStatus = document.getElementById("goStatus");
 
       function withBridge(fn) {
         var bridge = window.vkBridge || window.vkConnect;
         if (bridge && typeof bridge.send === "function") {
           try {
             fn(bridge);
+            return true;
           } catch (e) {}
         }
+        return false;
       }
 
-      /* Без VKWebAppInit сразу после загрузки оболочка VK часто остаётся на «загрузке», хотя HTML уже 200. */
       function initVkShell() {
         withBridge(function (bridge) {
           bridge
@@ -306,79 +322,33 @@
         });
       }
 
-      /* Скрипт bridge в <head> уже выполнился; инициализируем сразу (двойной Init не шлём). */
       initVkShell();
 
-      function openExternalFallback() {
-        // На мобильном VK window.open может игнорироваться; location.href надёжнее.
-        setStatus("Если чат не открылся автоматически, нажми ссылку ниже.");
-        fallbackLink.classList.add("is-visible");
+      /** Полный переход в диалог VK (vk.me — короткая ссылка на чат с сообществом). */
+      function redirectToBot() {
+        var target = window.top || window;
+        goStatus.textContent = "Открываем чат…";
+        btnMessages.disabled = true;
         try {
-          window.location.href = urlIm;
-          setTimeout(function () {
-            if (document.visibilityState === "visible") {
-              window.location.href = urlVkMe;
-            }
-          }, 500);
+          target.location.href = urlVkMe;
         } catch (e) {
-          window.open(urlVkMe, "_blank");
-        }
-      }
-
-      function openChat() {
-        var openedViaBridge = false;
-        setBusy(true);
-        setStatus("Готовим чат с ботом…");
-        withBridge(function (bridge) {
-          openedViaBridge = true;
-          var chain = Promise.resolve();
-          // 1) Подписка на сообщество (если ещё не подписан)
-          if (groupId > 0) {
-            chain = chain.then(function () {
-              setStatus("Подписываем на сообщество…");
-              return bridge.send("VKWebAppJoinGroup", { group_id: groupId }).catch(function () {});
-            });
-            // 2) Разрешение писать пользователю в ЛС от сообщества
-            chain = chain.then(function () {
-              setStatus("Запрашиваем разрешение на сообщения…");
-              return bridge.send("VKWebAppAllowMessagesFromGroup", {
-                group_id: groupId,
-                key: "good_days_x5"
-              }).catch(function () {});
-            });
+          try {
+            target.location.href = urlIm;
+          } catch (e2) {
+            window.location.href = urlVkMe;
           }
-          // 3) Открыть диалог. После AllowMessages бэк уже отправляет первое сообщение.
-          chain
-            .then(function () {
-              setStatus("Открываем диалог…");
-              return bridge.send("VKWebAppOpenURL", { url: urlIm });
-            })
-            .catch(function () {
-              return bridge.send("VKWebAppOpenURL", { url: urlVkMe });
-            })
-            .then(function () {
-              // Если клиент открыл диалог поверх миниаппа, закрывать не понадобится.
-              // Если нет — аккуратно закрываем миниапп, чтобы пользователь оказался в приложении VK.
-              setTimeout(function () {
-                bridge.send("VKWebAppClose", { status: "success" }).catch(function () {});
-              }, 900);
-            })
-            .catch(function () {
-              openExternalFallback();
-            })
-            .finally(function () {
-              setTimeout(function () {
-                setBusy(false);
-              }, 1200);
-            });
-        });
-        if (!openedViaBridge) {
-          openExternalFallback();
-          setBusy(false);
         }
       }
 
-      button.addEventListener("click", openChat);
+      btnOk.addEventListener("click", function () {
+        btnOk.disabled = true;
+        step2.classList.add("is-visible");
+        try {
+          step2.scrollIntoView({ behavior: "smooth", block: "end" });
+        } catch (e) {}
+      });
+
+      btnMessages.addEventListener("click", redirectToBot);
     })();
   </script>
 </body>
