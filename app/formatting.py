@@ -43,14 +43,14 @@ def format_segment_html(text: str, kind: str) -> str:
 
 
 def _intro_html(text: str) -> str:
-    lines = text.split("\n")
-    if not lines:
-        return esc(text)
-    first = esc(lines[0])
-    rest = "\n".join(esc(ln) for ln in lines[1:])
-    if rest.strip():
-        return f"<b>{first}</b>\n{rest}"
-    return f"<b>{first}</b>"
+    """Как финал: строки с <a …> без экранирования, остальные — esc (для ссылок в приветствии)."""
+    out: list[str] = []
+    for line in text.split("\n"):
+        if "<a " in line:
+            out.append(line)
+        else:
+            out.append(esc(line))
+    return "\n".join(out)
 
 
 def _question_html(text: str) -> str:

@@ -33,7 +33,7 @@ def build_vk_message(text: str | None, kind: str) -> tuple[str, str | None]:
     if kind == "plain":
         return text, None
     if kind == "intro":
-        return _intro(text)
+        return _finale_with_links(text)
     if kind == "question":
         return _question(text)
     if kind == "feedback":
@@ -79,16 +79,7 @@ def _finale_with_links(text: str) -> tuple[str, str | None]:
         bold_items = json.loads(fd_str).get("items", [])
     merged = bold_items + url_items
     merged.sort(key=lambda x: x["offset"])
-    return plain_body, _dump(merged) if merged else (plain_body, None)
-
-
-def _intro(text: str) -> tuple[str, str | None]:
-    lines = text.split("\n")
-    if not lines or not lines[0].strip():
-        return text, None
-    first = lines[0]
-    off, ln = _utf16_span(text, 0, len(first))
-    return text, _dump([{"type": "bold", "offset": off, "length": ln}])
+    return (plain_body, _dump(merged)) if merged else (plain_body, None)
 
 
 def _question(text: str) -> tuple[str, str | None]:
@@ -116,7 +107,7 @@ def _question(text: str) -> tuple[str, str | None]:
         o, l = _utf16_span(text, s, s + 1)
         items.append({"type": "bold", "offset": o, "length": l})
     items.sort(key=lambda x: x["offset"])
-    return text, _dump(items) if items else (text, None)
+    return (text, _dump(items)) if items else (text, None)
 
 
 def _feedback(text: str) -> tuple[str, str | None]:
@@ -152,4 +143,4 @@ def _finale(text: str) -> tuple[str, str | None]:
             items.append({"type": "bold", "offset": o, "length": l})
         pos += len(line)
     items.sort(key=lambda x: x["offset"])
-    return text, _dump(items) if items else (text, None)
+    return (text, _dump(items)) if items else (text, None)

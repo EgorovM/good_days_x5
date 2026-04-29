@@ -53,7 +53,7 @@ def start_game() -> tuple[GameSession, list[Segment]]:
         text=intro["text"],
         image=intro.get("image"),
         options=[("nav:go", "Поехали!")],
-        kind="plain",
+        kind="intro",
     )
     return session, [seg]
 
