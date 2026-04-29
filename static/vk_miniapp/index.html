@@ -14,12 +14,10 @@
       --bg-floor: #e4e8ec;
       --lime: #7cb342;
       --lime-dark: #689f38;
-      --lime-soft: rgba(124, 179, 66, 0.14);
       --glass: rgba(255, 255, 255, 0.72);
       --glass-border: rgba(255, 255, 255, 0.95);
       --text: #1a1f26;
       --muted: #5c6570;
-      --banana: #f5d547;
       --radius: 20px;
       --radius-sm: 14px;
       --shadow-soft: 0 20px 50px -20px rgba(26, 31, 38, 0.18);
@@ -64,59 +62,6 @@
     .content {
       position: relative;
       z-index: 1;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 14px;
-      border-radius: 999px;
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--lime-dark);
-      box-shadow: var(--shadow-soft);
-      margin-bottom: 14px;
-    }
-
-    .badge::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--banana), #e6b800);
-      box-shadow: 0 0 0 2px var(--lime-soft);
-    }
-
-    .hero {
-      position: relative;
-      margin: 0 0 18px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: linear-gradient(145deg, #fff 0%, #f0f3f6 100%);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: var(--shadow-soft), 0 0 0 1px rgba(124, 179, 66, 0.08);
-    }
-
-    .hero img {
-      display: block;
-      width: 100%;
-      height: auto;
-      vertical-align: middle;
-    }
-
-    .hero-glow {
-      position: absolute;
-      inset: auto 10% -30% 10%;
-      height: 45%;
-      background: radial-gradient(ellipse at center, var(--lime-soft), transparent 70%);
-      pointer-events: none;
     }
 
     h1 {
@@ -258,13 +203,6 @@
 <body>
   <div class="shell">
     <div class="content">
-      <span class="badge">X5 Tech</span>
-
-      <div class="hero">
-        <div class="hero-glow" aria-hidden="true"></div>
-        <img src="/static/images/stage01.jpg" width="1200" height="1200" alt="Банан и данные: технологии ритейла" loading="eager" decoding="async" />
-      </div>
-
       <h1>Отличные дни X5</h1>
       <p class="lede">Маршрут банана от плантации до полки — через реальные решения X5 Tech.</p>
 
